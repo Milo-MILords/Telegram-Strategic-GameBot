@@ -115,6 +115,8 @@ def callback_query(call):
             confirm_upgrade(call.message)
         elif '_'.join(data_parts[0:2]) == 'upgrade_confirm':
             process_upgrade_confirmation(call)
+    elif call.data == 'treaty_confirmed' or call.data == 'treaty_not_confirmed':
+        process_treaty_confirmation(call)
     elif data_parts[0] == 'private':
         if len(data_parts) == 2 and data_parts[1] == 'message':
             ask_for_private_message(call.message, user_id)
@@ -518,10 +520,10 @@ def send_treaty_confirmation(call, group_id):
         bot.answer_callback_query(call.id, "محتوای معاهده یافت نشد.")
 
 
-@bot.callback_query_handler(func=lambda call: call.data in ['treaty_confirmed', 'treaty_not_confirmed'])
 def process_treaty_confirmation(call):
     user_id = call.from_user.id
     group_id = user_context[user_id]['group_id']
+    print(call.data)
     if call.data == 'treaty_confirmed':
         cursor.execute("SELECT treaties FROM users WHERE user_id = ?", (user_id,))
         user_treaties = cursor.fetchone()[0]
