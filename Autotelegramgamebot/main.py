@@ -3,9 +3,9 @@ from telebot import types
 import sqlite3
 
 # Initialize the bot with your token
-API_TOKEN = '2033945878:AAE5slaBLymzC_r7N_k0744_9l4UHTTj7EM'
-ADMIN_ID = 1479421111
-CHANNEL_ID = "@testbot130"
+API_TOKEN = ''
+ADMIN_ID = 000
+CHANNEL_ID = ""
 bot = telebot.TeleBot(API_TOKEN)
 
 # Initialize the database
