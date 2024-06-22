@@ -16,6 +16,7 @@ cursor = conn.cursor()
 cursor.execute('''CREATE TABLE IF NOT EXISTS users (
                     user_id INTEGER PRIMARY KEY,
                     group_id INTEGER,
+                    clothes INTEGER DEFAULT 2000,
                     money INTEGER DEFAULT 2000,
                     stones INTEGER DEFAULT 2000,
                     wood INTEGER DEFAULT 2000,
@@ -33,7 +34,7 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS users (
                     small_ships INTEGER DEFAULT 1500,
                     medium_ships INTEGER DEFAULT 1500,
                     large_ships INTEGER DEFAULT 1500,
-                    stone_factory INTEGER DEFAULT 2,
+                    stone_factory INTEGER DEFAULT 0,
                     wood_factory INTEGER DEFAULT 0,
                     iron_factory INTEGER DEFAULT 0,
                     gold_mine INTEGER DEFAULT 0,
@@ -105,6 +106,7 @@ def callback_query(call):
     data_parts = call.data.split('_')
     global item_to_upgrade
     item_to_upgrade = '_'.join(call.data.split('_')[1:])
+    #print(data_parts)
 
     if data_parts[0] == 'assets':
         show_assets(call.message, user_id)
@@ -135,7 +137,7 @@ def callback_query(call):
     elif data_parts[0] == 'weekly':
         if data_parts[1] == 'update':
             if user_id == ADMIN_ID:
-                collect_factory_output(call.message)
+                collect_factory_output(call.message, user_id)
             else:
                 bot.answer_callback_query(call.id, "شما ادمین نیستید.")
     elif data_parts[0] == 'attack':
@@ -154,16 +156,13 @@ def callback_query(call):
         elif len(data_parts) == 3 and data_parts[1] == 'send':
             group_id = int(data_parts[2])
             send_treaty_confirmation(call, group_id)
-    elif data_parts[0] == 'factory':
-        if len(data_parts) == 2 and data_parts[1] == 'collect':
-            collect_factory_output(call.message, user_id)
     else:
         bot.answer_callback_query(call.id, "دستور نامعتبر است.")
 
 
 def show_assets(message, user_id):
     cursor.execute(
-        "SELECT money, stones, wood, iron, gold, food, meat, swordsmen, gunmen, cavalry_swordsmen, cavalry_gunmen, special_guard, medium_cannons, large_cannons, small_ships, medium_ships, large_ships, "
+        "SELECT clothes, money, stones, wood, iron, gold, food, meat, swordsmen, gunmen, cavalry_swordsmen, cavalry_gunmen, special_guard, medium_cannons, large_cannons, small_ships, medium_ships, large_ships, "
         "stone_factory, wood_factory, iron_factory, gold_mine, farm, animal_farm, clothes_factory, bank, "
         "swordsmen_camp, gunmen_camp, cavalry_swordsmen_camp, cavalry_gunmen_camp, special_guard_camp, medium_cannon_factory, large_cannon_factory, small_shipyard, medium_shipyard, large_shipyard, treaties FROM users WHERE user_id=?",
         (user_id,))
@@ -171,46 +170,47 @@ def show_assets(message, user_id):
     if user:
         assets_message = (
             f"💰 دارایی:\n"
-            f"پول💵 : {user[0]}\n"
-            f"🪨 سنگ: {user[1]}\n"
-            f"🌲 چوب: {user[2]}\n"
-            f"🪛 آهن: {user[3]}\n"
-            f"🏅 طلا: {user[4]}\n"
-            f"🍞 غذا: {user[5]}\n"
-            f"🍖 گوشت: {user[6]}\n"
-            f"🗡️ سرباز شمشیرزن: {user[7]}\n"
-            f"🔫 سرباز تفنگدار: {user[8]}\n"
-            f"🗡️ سواره‌نظام شمشیرزن: {user[9]}\n"
-            f"🔫 سواره‌نظام تفنگدار: {user[10]}\n"
-            f"🛡️ گارد ویژه: {user[11]}\n"
-            f"🎯 توپ متوسط: {user[12]}\n"
-            f"🎯 توپ بزرگ: {user[13]}\n"
-            f"⛵ کشتی کوچک: {user[14]}\n"
-            f"🚢 کشتی متوسط: {user[15]}\n"
-            f"🛳️ کشتی بزرگ: {user[16]}\n\n"
+            f"لباس🥋 : {user[0]}\n"
+            f"پول💵 : {user[1]}\n"
+            f"🪨 سنگ: {user[2]}\n"
+            f"🌲 چوب: {user[3]}\n"
+            f"🪛 آهن: {user[4]}\n"
+            f"🏅 طلا: {user[5]}\n"
+            f"🍞 غذا: {user[6]}\n"
+            f"🍖 گوشت: {user[7]}\n"
+            f"🗡️ سرباز شمشیرزن: {user[8]}\n"
+            f"🔫 سرباز تفنگدار: {user[9]}\n"
+            f"🗡️ سواره‌نظام شمشیرزن: {user[10]}\n"
+            f"🔫 سواره‌نظام تفنگدار: {user[11]}\n"
+            f"🛡️ گارد ویژه: {user[12]}\n"
+            f"🎯 توپ متوسط: {user[13]}\n"
+            f"🎯 توپ بزرگ: {user[14]}\n"
+            f"⛵ کشتی کوچک: {user[15]}\n"
+            f"🚢 کشتی متوسط: {user[16]}\n"
+            f"🛳️ کشتی بزرگ: {user[17]}\n\n"
             f"🏭 کارخانجات:\n"
-            f"کارخونه سنگ: {user[17]}\n"
-            f"کارخونه چوب: {user[18]}\n"
-            f"کارخونه آهن: {user[19]}\n"
-            f"معدن طلا: {user[20]}\n"
-            f"زمین کشاورزی: {user[21]}\n"
-            f"دامداری: {user[22]}\n"
-            f"کارخانه لباس: {user[23]}\n"
-            f"بانک🏦: {user[24]}\n\n"
+            f"کارخونه سنگ: {user[18]}\n"
+            f"کارخونه چوب: {user[19]}\n"
+            f"کارخونه آهن: {user[20]}\n"
+            f"معدن طلا: {user[21]}\n"
+            f"زمین کشاورزی: {user[22]}\n"
+            f"دامداری: {user[23]}\n"
+            f"کارخانه لباس: {user[24]}\n"
+            f"بانک🏦: {user[25]}\n\n"
             f"⚔️کمپ‌ها:\n"
-            f"کمپ سرباز شمشیرزن: {user[25]}\n"
-            f"کمپ سرباز تفنگدار: {user[26]}\n"
-            f"کمپ سواره‌نظام شمشیرزن: {user[27]}\n"
-            f"کمپ سواره‌نظام تفنگدار: {user[28]}\n"
-            f"کمپ گارد ویژه: {user[29]}\n\n"
+            f"کمپ سرباز شمشیرزن: {user[26]}\n"
+            f"کمپ سرباز تفنگدار: {user[27]}\n"
+            f"کمپ سواره‌نظام شمشیرزن: {user[28]}\n"
+            f"کمپ سواره‌نظام تفنگدار: {user[29]}\n"
+            f"کمپ گارد ویژه: {user[30]}\n\n"
             f"🔧 کارخانجات توپخانه:\n"
-            f"کارخانه توپ متوسط: {user[30]}\n"
-            f"کارخانه توپ بزرگ: {user[31]}\n\n"
+            f"کارخانه توپ متوسط: {user[31]}\n"
+            f"کارخانه توپ بزرگ: {user[32]}\n\n"
             f"⚓کشتی‌سازی‌ها:\n"
-            f"کشتی‌سازی کوچک: {user[32]}\n"
-            f"کشتی‌سازی متوسط: {user[33]}\n"
-            f"کشتی‌سازی بزرگ: {user[34]}\n\n"
-            f"📜 معاهدات:\n{user[35]}"
+            f"کشتی‌سازی کوچک: {user[33]}\n"
+            f"کشتی‌سازی متوسط: {user[34]}\n"
+            f"کشتی‌سازی بزرگ: {user[35]}\n\n"
+            f"📜 معاهدات:\n{user[36]}"
         )
         bot.send_message(message.chat.id, assets_message)
     else:
@@ -302,119 +302,121 @@ def process_upgrade_confirmation(call):
 def check_upgrade_cost(user_id):
     cursor.execute("SELECT stones, wood, iron, gold, money FROM users WHERE user_id=?", (user_id,))
     resources = cursor.fetchone()
-    if item_to_upgrade == 'stone_factory':
+    #print(item_to_upgrade)
+    if item_to_upgrade == 'confirm_stone_factory':
         return resources[0] >= 500 and resources[4] >= 500
-    elif item_to_upgrade == 'wood_factory':
+    elif item_to_upgrade == 'confirm_wood_factory':
         return resources[0] >= 500 and resources[4] >= 500
-    elif item_to_upgrade == 'iron_factory':
+    elif item_to_upgrade == 'confirm_iron_factory':
         return resources[0] >= 500 and resources[4] >= 500
-    elif item_to_upgrade == 'gold_mine':
+    elif item_to_upgrade == 'confirm_gold_mine':
         return resources[2] >= 500 and resources[0] >= 500 and resources[4] >= 500
-    elif item_to_upgrade == 'farm_farm':
+    elif item_to_upgrade == 'confirm_farm_farm':
         return resources[2] >= 500 and resources[0] >= 500
-    elif item_to_upgrade == 'animal_farm':
+    elif item_to_upgrade == 'confirm_animal_farm':
         return resources[2] >= 500 and resources[3] >= 500 and resources[0] >= 500
-    elif item_to_upgrade == 'clothes_factory':
+    elif item_to_upgrade == 'confirm_clothes_factory':
         return resources[3] >= 500 and resources[4] >= 500 and resources[0] >= 500
-    elif item_to_upgrade == 'bank_bank':
+    elif item_to_upgrade == 'confirm_bank_bank':
         return resources[0] >= 500 and resources[2] >= 500 and resources[3] >= 500
-    elif item_to_upgrade == 'swordsmen_camp':
+    elif item_to_upgrade == 'confirm_swordsmen_camp':
         return resources[4] >= 500 and resources[0] >= 500 and resources[2] >= 500
-    elif item_to_upgrade == 'gunmen_camp':
+    elif item_to_upgrade == 'confirm_gunmen_camp':
         return resources[4] >= 500 and resources[3] >= 500 and resources[2] >= 500
-    elif item_to_upgrade == 'cavalryswordsmen_camp':
+    elif item_to_upgrade == 'confirm_cavalryswordsmen_camp':
         return resources[2] >= 500 and resources[3] >= 250 and resources[0] >= 500 and resources[4] >= 250
-    elif item_to_upgrade == 'cavalrygunmen_camp':
+    elif item_to_upgrade == 'confirm_cavalrygunmen_camp':
         return resources[3] >= 800 and resources[0] >= 800 and resources[4] >= 500
-    elif item_to_upgrade == 'specialguard_camp':
+    elif item_to_upgrade == 'confirm_specialguard_camp':
         return resources[4] >= 1000 and resources[0] >= 1000 and resources[2] >= 1000
-    elif item_to_upgrade == 'mediumcannon_factory':
+    elif item_to_upgrade == 'confirm_mediumcannon_factory':
         return resources[2] >= 500 and resources[4] >= 250 and resources[1] >= 250
-    elif item_to_upgrade == 'largecannon_factory':
+    elif item_to_upgrade == 'confirm_largecannon_factory':
         return resources[2] >= 500 and resources[0] >= 500 and resources[4] >= 250 and resources[3] >= 200
-    elif item_to_upgrade == 'small_shipyard':
+    elif item_to_upgrade == 'confirm_small_shipyard':
         return resources[2] >= 200 and resources[1] >= 200 and resources[4] >= 200
-    elif item_to_upgrade == 'medium_shipyard':
+    elif item_to_upgrade == 'confirm_medium_shipyard':
         return resources[2] >= 500 and resources[1] >= 500 and resources[4] >= 500
-    elif item_to_upgrade == 'large_shipyard':
+    elif item_to_upgrade == 'confirm_large_shipyard':
         return resources[2] >= 1000 and resources[1] >= 1000 and resources[4] >= 1000
     else:
         return False
 
 
 def apply_upgrade(user_id):
-    if item_to_upgrade == 'stone_factory':
+    if item_to_upgrade == 'confirm_stone_factory':
         cursor.execute(
             "UPDATE users SET stones = stones - 500, money = money - 500, stone_factory = stone_factory + 1 WHERE user_id=?",
             (user_id,))
-    elif item_to_upgrade == 'wood_factory':
+    elif item_to_upgrade == 'confirm_wood_factory':
         cursor.execute(
             "UPDATE users SET stones = stones - 500, money = money - 500, wood_factory = wood_factory + 1 WHERE user_id=?",
             (user_id,))
-    elif item_to_upgrade == 'iron_factory':
+    elif item_to_upgrade == 'confirm_iron_factory':
         cursor.execute(
             "UPDATE users SET stones = stones - 500, money = money - 500, iron_factory = iron_factory + 1 WHERE user_id=?",
             (user_id,))
-    elif item_to_upgrade == 'gold_mine':
+    elif item_to_upgrade == 'confirm_gold_mine':
         cursor.execute(
             "UPDATE users SET wood = wood - 500, stones = stones - 500, money = money - 500, gold_mine = gold_mine + 1 WHERE user_id=?",
             (user_id,))
-    elif item_to_upgrade == 'farm_farm':
+    elif item_to_upgrade == 'confirm_farm_farm':
         cursor.execute(
             "UPDATE users SET wood = wood - 500, stones = stones - 500, farm = farm + 1 WHERE user_id=?",
             (user_id,))
-    elif item_to_upgrade == 'animal_farm':
+    elif item_to_upgrade == 'confirm_animal_farm':
         cursor.execute(
             "UPDATE users SET wood = wood - 500, iron = iron - 500, stones = stones - 500, animal_farm = animal_farm + 1 WHERE user_id=?",
             (user_id,))
-    elif item_to_upgrade == 'clothes_factory':
+    elif item_to_upgrade == 'confirm_clothes_factory':
         cursor.execute(
             "UPDATE users SET gold = gold - 500, money = money - 500, stones = stones - 500, clothes_factory = clothes_factory + 1 WHERE user_id=?",
             (user_id,))
-    elif item_to_upgrade == 'bank_bank':
+    elif item_to_upgrade == 'confirm_bank_bank':
         cursor.execute(
             "UPDATE users SET stones = stones - 500, iron = iron - 500, gold = gold - 500, bank = bank + 1 WHERE user_id=?",
             (user_id,))
-    elif item_to_upgrade == 'swordsmen_camp':
+    elif item_to_upgrade == 'confirm_swordsmen_camp':
         cursor.execute(
             "UPDATE users SET money = money - 500, stones = stones - 500, wood = wood - 500, swordsmen_camp = swordsmen_camp + 1 WHERE user_id=?",
             (user_id,))
-    elif item_to_upgrade == 'gunmen_camp':
+    elif item_to_upgrade == 'confirm_gunmen_camp':
         cursor.execute(
             "UPDATE users SET money = money - 500, gold = gold - 500, iron = iron - 500, gunmen_camp = gunmen_camp + 1 WHERE user_id=?",
             (user_id,))
-    elif item_to_upgrade == 'cavalryswordsmen_camp':
+    elif item_to_upgrade == 'confirm_cavalryswordsmen_camp':
         cursor.execute(
             "UPDATE users SET iron = iron - 500, gold = gold - 250, stones = stones - 500, money = money - 250, cavalry_swordsmen_camp = cavalry_swordsmen_camp + 1 WHERE user_id=?",
             (user_id,))
-    elif item_to_upgrade == 'cavalrygunmen_camp':
+    elif item_to_upgrade == 'confirm_cavalrygunmen_camp':
         cursor.execute(
             "UPDATE users SET gold = gold - 800, stones = stones - 800, money = money - 500, cavalry_gunmen_camp = cavalry_gunmen_camp + 1 WHERE user_id=?",
             (user_id,))
-    elif item_to_upgrade == 'specialguard_camp':
+    elif item_to_upgrade == 'confirm_specialguard_camp':
         cursor.execute(
             "UPDATE users SET money = money - 1000, stones = stones - 1000, wood = wood - 1000, special_guard_camp = special_guard_camp + 1 WHERE user_id=?",
             (user_id,))
-    elif item_to_upgrade == 'mediumcannon_factory':
+    elif item_to_upgrade == 'confirm_mediumcannon_factory':
         cursor.execute(
             "UPDATE users SET iron = iron - 500, money = money - 250, wood = wood - 250, medium_cannon_factory = medium_cannon_factory + 1 WHERE user_id=?",
             (user_id,))
-    elif item_to_upgrade == 'largecannon_factory':
+    elif item_to_upgrade == 'confirm_largecannon_factory':
         cursor.execute(
             "UPDATE users SET iron = iron - 500, stones = stones - 500, money = money - 250, gold = gold - 200, large_cannon_factory = large_cannon_factory + 1 WHERE user_id=?",
             (user_id,))
-    elif item_to_upgrade == 'small_shipyard':
+    elif item_to_upgrade == 'confirm_small_shipyard':
         cursor.execute(
             "UPDATE users SET iron = iron - 200, wood = wood - 200, money = money - 200, small_shipyard = small_shipyard + 1 WHERE user_id=?",
             (user_id,))
-    elif item_to_upgrade == 'medium_shipyard':
+    elif item_to_upgrade == 'confirm_medium_shipyard':
         cursor.execute(
             "UPDATE users SET iron = iron - 500, wood = wood - 500, money = money - 500, medium_shipyard = medium_shipyard + 1 WHERE user_id=?",
             (user_id,))
-    elif item_to_upgrade == 'large_shipyard':
+    elif item_to_upgrade == 'confirm_large_shipyard':
         cursor.execute(
             "UPDATE users SET iron = iron - 1000, wood = wood - 1000, money = money - 1000, large_shipyard = large_shipyard + 1 WHERE user_id=?",
             (user_id,))
+    #print('done')
     conn.commit()
 
 
@@ -523,7 +525,7 @@ def send_treaty_confirmation(call, group_id):
 def process_treaty_confirmation(call):
     user_id = call.from_user.id
     group_id = user_context[user_id]['group_id']
-    print(call.data)
+    #print(call.data)
     if call.data == 'treaty_confirmed':
         cursor.execute("SELECT treaties FROM users WHERE user_id = ?", (user_id,))
         user_treaties = cursor.fetchone()[0]
@@ -537,9 +539,7 @@ def process_treaty_confirmation(call):
     bot.answer_callback_query(call.id, 'نتیجه معاهده ثبت شد')
 
 
-@bot.callback_query_handler(func=lambda call: call.data == 'factory_collect')
-def collect_factory_output(call):
-    user_id = call.from_user.id
+def collect_factory_output(call, user_id):
     cursor.execute(
         "SELECT stone_factory, wood_factory, iron_factory, gold_mine, farm, animal_farm, clothes_factory, bank, swordsmen_camp, gunmen_camp, cavalry_swordsmen_camp, cavalry_gunmen_camp, special_guard_camp, medium_cannon_factory, large_cannon_factory, small_shipyard, medium_shipyard, large_shipyard FROM users WHERE user_id=?",
         (user_id,))
@@ -594,9 +594,9 @@ def collect_factory_output(call):
                               f"🎯 توپ متوسط: {medium_cannons_collected}\n"
                               f"🎯 توپ بزرگ: {large_cannons_collected}\n")
 
-        bot.send_message(call.message.chat.id, collection_message)
+        bot.send_message(call.chat.id, collection_message)
     else:
-        bot.send_message(call.message.chat.id, "شما هیچ کارخانه‌ای ندارید.")
+        bot.send_message(call.chat.id, "خطا")
 
 
 def ask_for_statement(message, user_id):
