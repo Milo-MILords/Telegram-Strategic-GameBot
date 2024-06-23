@@ -453,7 +453,7 @@ def send_private_message(call, group_id):
 
 def show_asset_change_options(message):
     markup = types.InlineKeyboardMarkup(row_width=2)
-    asset_types = ['stones', 'wood', 'iron', 'gold', 'money', 'food', 'meat', 'swordsmen', 'gunmen',
+    asset_types = ['clothes', 'stones', 'wood', 'iron', 'gold', 'money', 'food', 'meat', 'swordsmen', 'gunmen',
                    'cavalry_swordsmen', 'cavalry_gunmen', 'special_guard', 'medium_cannons', 'large_cannons',
                    'small_ships', 'medium_ships', 'large_ships']
     for asset in asset_types:
