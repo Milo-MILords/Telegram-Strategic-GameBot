@@ -109,7 +109,7 @@ def callback_query(call):
     #print(data_parts)
 
     if data_parts[0] == 'assets':
-        show_assets(call.message, user_id)
+        show_assets(call.message)
     elif data_parts[0] == 'upgrade':
         if len(data_parts) == 1:
             show_upgrade_options(call.message)
@@ -133,16 +133,16 @@ def callback_query(call):
                 bot.answer_callback_query(call.id, "شما ادمین نیستید.")
         elif len(data_parts) == 3 and data_parts[1] == 'asset':
             asset_type = data_parts[2]
-            ask_for_new_asset_value(call.message, asset_type, user_id)
+            ask_for_new_asset_value(call.message, asset_type)
     elif data_parts[0] == 'weekly':
         if data_parts[1] == 'update':
             if user_id == ADMIN_ID:
-                collect_factory_output(call.message, user_id)
+                collect_factory_output(call.message)
             else:
                 bot.answer_callback_query(call.id, "شما ادمین نیستید.")
     elif data_parts[0] == 'attack':
         if len(data_parts) == 1:
-            ask_for_attack_type(call.message, user_id)
+            ask_for_attack_type(call.message)
         else:
             handle_attack_type_selection(call)
     elif data_parts[0] == 'statement':
@@ -160,12 +160,13 @@ def callback_query(call):
         bot.answer_callback_query(call.id, "دستور نامعتبر است.")
 
 
-def show_assets(message, user_id):
+def show_assets(message):
+    group_id = message.chat.id
     cursor.execute(
         "SELECT clothes, money, stones, wood, iron, gold, food, meat, swordsmen, gunmen, cavalry_swordsmen, cavalry_gunmen, special_guard, medium_cannons, large_cannons, small_ships, medium_ships, large_ships, "
         "stone_factory, wood_factory, iron_factory, gold_mine, farm, animal_farm, clothes_factory, bank, "
-        "swordsmen_camp, gunmen_camp, cavalry_swordsmen_camp, cavalry_gunmen_camp, special_guard_camp, medium_cannon_factory, large_cannon_factory, small_shipyard, medium_shipyard, large_shipyard, treaties FROM users WHERE user_id=?",
-        (user_id,))
+        "swordsmen_camp, gunmen_camp, cavalry_swordsmen_camp, cavalry_gunmen_camp, special_guard_camp, medium_cannon_factory, large_cannon_factory, small_shipyard, medium_shipyard, large_shipyard, treaties FROM users WHERE group_id=?",
+        (group_id,))
     user = cursor.fetchone()
     if user:
         assets_message = (
@@ -290,17 +291,17 @@ def get_upgrade_cost_message():
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('upgrade_confirm_'))
 def process_upgrade_confirmation(call):
-    user_id = call.from_user.id
-    if check_upgrade_cost(user_id):
-        apply_upgrade(user_id)
+    group_id = call.chat.id
+    if check_upgrade_cost(group_id):
+        apply_upgrade(group_id)
         bot.send_message(call.message.chat.id, f"ارتقا یافت")
     else:
         bot.send_message(call.message.chat.id, "موجودی شما کافی نیست")
     bot.answer_callback_query(call.id)
 
 
-def check_upgrade_cost(user_id):
-    cursor.execute("SELECT stones, wood, iron, gold, money FROM users WHERE user_id=?", (user_id,))
+def check_upgrade_cost(group_id):
+    cursor.execute("SELECT stones, wood, iron, gold, money FROM users WHERE group_id=?", (group_id,))
     resources = cursor.fetchone()
     #print(item_to_upgrade)
     if item_to_upgrade == 'confirm_stone_factory':
@@ -343,79 +344,79 @@ def check_upgrade_cost(user_id):
         return False
 
 
-def apply_upgrade(user_id):
+def apply_upgrade(group_id):
     if item_to_upgrade == 'confirm_stone_factory':
         cursor.execute(
-            "UPDATE users SET stones = stones - 500, money = money - 500, stone_factory = stone_factory + 1 WHERE user_id=?",
-            (user_id,))
+            "UPDATE users SET stones = stones - 500, money = money - 500, stone_factory = stone_factory + 1 WHERE group_id=?",
+            (group_id,))
     elif item_to_upgrade == 'confirm_wood_factory':
         cursor.execute(
-            "UPDATE users SET stones = stones - 500, money = money - 500, wood_factory = wood_factory + 1 WHERE user_id=?",
-            (user_id,))
+            "UPDATE users SET stones = stones - 500, money = money - 500, wood_factory = wood_factory + 1 WHERE group_id=?",
+            (group_id,))
     elif item_to_upgrade == 'confirm_iron_factory':
         cursor.execute(
-            "UPDATE users SET stones = stones - 500, money = money - 500, iron_factory = iron_factory + 1 WHERE user_id=?",
-            (user_id,))
+            "UPDATE users SET stones = stones - 500, money = money - 500, iron_factory = iron_factory + 1 WHERE group_id=?",
+            (group_id,))
     elif item_to_upgrade == 'confirm_gold_mine':
         cursor.execute(
-            "UPDATE users SET wood = wood - 500, stones = stones - 500, money = money - 500, gold_mine = gold_mine + 1 WHERE user_id=?",
-            (user_id,))
+            "UPDATE users SET wood = wood - 500, stones = stones - 500, money = money - 500, gold_mine = gold_mine + 1 WHERE group_id=?",
+            (group_id,))
     elif item_to_upgrade == 'confirm_farm_farm':
         cursor.execute(
-            "UPDATE users SET wood = wood - 500, stones = stones - 500, farm = farm + 1 WHERE user_id=?",
-            (user_id,))
+            "UPDATE users SET wood = wood - 500, stones = stones - 500, farm = farm + 1 WHERE group_id=?",
+            (group_id,))
     elif item_to_upgrade == 'confirm_animal_farm':
         cursor.execute(
-            "UPDATE users SET wood = wood - 500, iron = iron - 500, stones = stones - 500, animal_farm = animal_farm + 1 WHERE user_id=?",
-            (user_id,))
+            "UPDATE users SET wood = wood - 500, iron = iron - 500, stones = stones - 500, animal_farm = animal_farm + 1 WHERE group_id=?",
+            (group_id,))
     elif item_to_upgrade == 'confirm_clothes_factory':
         cursor.execute(
-            "UPDATE users SET gold = gold - 500, money = money - 500, stones = stones - 500, clothes_factory = clothes_factory + 1 WHERE user_id=?",
-            (user_id,))
+            "UPDATE users SET gold = gold - 500, money = money - 500, stones = stones - 500, clothes_factory = clothes_factory + 1 WHERE group_id=?",
+            (group_id,))
     elif item_to_upgrade == 'confirm_bank_bank':
         cursor.execute(
-            "UPDATE users SET stones = stones - 500, iron = iron - 500, gold = gold - 500, bank = bank + 1 WHERE user_id=?",
-            (user_id,))
+            "UPDATE users SET stones = stones - 500, iron = iron - 500, gold = gold - 500, bank = bank + 1 WHERE group_id=?",
+            (group_id,))
     elif item_to_upgrade == 'confirm_swordsmen_camp':
         cursor.execute(
-            "UPDATE users SET money = money - 500, stones = stones - 500, wood = wood - 500, swordsmen_camp = swordsmen_camp + 1 WHERE user_id=?",
-            (user_id,))
+            "UPDATE users SET money = money - 500, stones = stones - 500, wood = wood - 500, swordsmen_camp = swordsmen_camp + 1 WHERE group_id=?",
+            (group_id,))
     elif item_to_upgrade == 'confirm_gunmen_camp':
         cursor.execute(
-            "UPDATE users SET money = money - 500, gold = gold - 500, iron = iron - 500, gunmen_camp = gunmen_camp + 1 WHERE user_id=?",
-            (user_id,))
+            "UPDATE users SET money = money - 500, gold = gold - 500, iron = iron - 500, gunmen_camp = gunmen_camp + 1 WHERE group_id=?",
+            (group_id,))
     elif item_to_upgrade == 'confirm_cavalryswordsmen_camp':
         cursor.execute(
-            "UPDATE users SET iron = iron - 500, gold = gold - 250, stones = stones - 500, money = money - 250, cavalry_swordsmen_camp = cavalry_swordsmen_camp + 1 WHERE user_id=?",
-            (user_id,))
+            "UPDATE users SET iron = iron - 500, gold = gold - 250, stones = stones - 500, money = money - 250, cavalry_swordsmen_camp = cavalry_swordsmen_camp + 1 WHERE group_id=?",
+            (group_id,))
     elif item_to_upgrade == 'confirm_cavalrygunmen_camp':
         cursor.execute(
-            "UPDATE users SET gold = gold - 800, stones = stones - 800, money = money - 500, cavalry_gunmen_camp = cavalry_gunmen_camp + 1 WHERE user_id=?",
-            (user_id,))
+            "UPDATE users SET gold = gold - 800, stones = stones - 800, money = money - 500, cavalry_gunmen_camp = cavalry_gunmen_camp + 1 WHERE group_id=?",
+            (group_id,))
     elif item_to_upgrade == 'confirm_specialguard_camp':
         cursor.execute(
-            "UPDATE users SET money = money - 1000, stones = stones - 1000, wood = wood - 1000, special_guard_camp = special_guard_camp + 1 WHERE user_id=?",
-            (user_id,))
+            "UPDATE users SET money = money - 1000, stones = stones - 1000, wood = wood - 1000, special_guard_camp = special_guard_camp + 1 WHERE group_id=?",
+            (group_id,))
     elif item_to_upgrade == 'confirm_mediumcannon_factory':
         cursor.execute(
-            "UPDATE users SET iron = iron - 500, money = money - 250, wood = wood - 250, medium_cannon_factory = medium_cannon_factory + 1 WHERE user_id=?",
-            (user_id,))
+            "UPDATE users SET iron = iron - 500, money = money - 250, wood = wood - 250, medium_cannon_factory = medium_cannon_factory + 1 WHERE group_id=?",
+            (group_id,))
     elif item_to_upgrade == 'confirm_largecannon_factory':
         cursor.execute(
-            "UPDATE users SET iron = iron - 500, stones = stones - 500, money = money - 250, gold = gold - 200, large_cannon_factory = large_cannon_factory + 1 WHERE user_id=?",
-            (user_id,))
+            "UPDATE users SET iron = iron - 500, stones = stones - 500, money = money - 250, gold = gold - 200, large_cannon_factory = large_cannon_factory + 1 WHERE group_id=?",
+            (group_id,))
     elif item_to_upgrade == 'confirm_small_shipyard':
         cursor.execute(
-            "UPDATE users SET iron = iron - 200, wood = wood - 200, money = money - 200, small_shipyard = small_shipyard + 1 WHERE user_id=?",
-            (user_id,))
+            "UPDATE users SET iron = iron - 200, wood = wood - 200, money = money - 200, small_shipyard = small_shipyard + 1 WHERE group_id=?",
+            (group_id,))
     elif item_to_upgrade == 'confirm_medium_shipyard':
         cursor.execute(
-            "UPDATE users SET iron = iron - 500, wood = wood - 500, money = money - 500, medium_shipyard = medium_shipyard + 1 WHERE user_id=?",
-            (user_id,))
+            "UPDATE users SET iron = iron - 500, wood = wood - 500, money = money - 500, medium_shipyard = medium_shipyard + 1 WHERE group_id=?",
+            (group_id,))
     elif item_to_upgrade == 'confirm_large_shipyard':
         cursor.execute(
-            "UPDATE users SET iron = iron - 1000, wood = wood - 1000, money = money - 1000, large_shipyard = large_shipyard + 1 WHERE user_id=?",
-            (user_id,))
+            "UPDATE users SET iron = iron - 1000, wood = wood - 1000, money = money - 1000, large_shipyard = large_shipyard + 1 WHERE group_id=?",
+            (group_id,))
     #print('done')
     conn.commit()
 
@@ -461,17 +462,18 @@ def show_asset_change_options(message):
     bot.send_message(message.chat.id, "انتخاب کنید که کدام دارایی را میخواهید تغییر دهید:", reply_markup=markup)
 
 
-def ask_for_new_asset_value(message, asset_type, user_id):
-    user_context[user_id] = {'asset_type': asset_type}
+def ask_for_new_asset_value(message, asset_type):
+    group_id = message.chat.id
+    user_context[group_id] = {'asset_type': asset_type}
     bot.send_message(message.chat.id, f"لطفا مقدار جدید برای {asset_type} را وارد کنید:")
-    bot.register_next_step_handler(message, lambda msg: set_new_asset_value(msg, user_id))
+    bot.register_next_step_handler(message, lambda msg: set_new_asset_value(msg, group_id))
 
 
-def set_new_asset_value(message, user_id):
+def set_new_asset_value(message, group_id):
     try:
         new_value = int(message.text)
-        asset_type = user_context[user_id].get('asset_type')
-        cursor.execute(f"UPDATE users SET {asset_type} = ? WHERE user_id = ?", (new_value, user_id))
+        asset_type = user_context[group_id].get('asset_type')
+        cursor.execute(f"UPDATE users SET {asset_type} = ? WHERE group_id = ?", (new_value, group_id))
         conn.commit()
         bot.send_message(message.chat.id, f"{asset_type} به {new_value} تغییر یافت.")
     except ValueError:
@@ -539,11 +541,14 @@ def process_treaty_confirmation(call):
     bot.answer_callback_query(call.id, 'نتیجه معاهده ثبت شد')
 
 
-def collect_factory_output(call, user_id):
+def collect_factory_output(call):
+    group_id = call.chat.id
     cursor.execute(
-        "SELECT stone_factory, wood_factory, iron_factory, gold_mine, farm, animal_farm, clothes_factory, bank, swordsmen_camp, gunmen_camp, cavalry_swordsmen_camp, cavalry_gunmen_camp, special_guard_camp, medium_cannon_factory, large_cannon_factory, small_shipyard, medium_shipyard, large_shipyard FROM users WHERE user_id=?",
-        (user_id,))
+        "SELECT stone_factory, wood_factory, iron_factory, gold_mine, farm, animal_farm, clothes_factory, bank, swordsmen_camp, gunmen_camp, cavalry_swordsmen_camp, cavalry_gunmen_camp, special_guard_camp, medium_cannon_factory, large_cannon_factory, small_shipyard, medium_shipyard, large_shipyard FROM users WHERE group_id=?",
+        (group_id,))
     user_factories = cursor.fetchone()
+    #print(call.chat.id)
+    #print(user_factories)
 
     if user_factories:
         stones_collected = user_factories[0] * 1500
@@ -571,7 +576,7 @@ def collect_factory_output(call, user_id):
              meat_collected, clothes_collected, small_ships_collected, medium_ships_collected, large_ships_collected,
              swordsmen_collected, gunmen_collected, cavalry_swordsmen_collected, cavalry_gunmen_collected,
              special_guard_collected, medium_cannons_collected, large_cannons_collected,
-             user_id))
+             group_id))
         conn.commit()
 
         collection_message = (f"🏭 محصولات جمع‌آوری شده:\n"
@@ -636,7 +641,7 @@ def send_statement(message, user_id):
                        parse_mode='HTML')
 
 
-def ask_for_attack_type(message, user_id):
+def ask_for_attack_type(message):
     markup = types.InlineKeyboardMarkup(row_width=2)
     markup.add(types.InlineKeyboardButton("زمینی", callback_data='attack_type_land'))
     markup.add(types.InlineKeyboardButton("دریایی", callback_data='attack_type_sea'))
