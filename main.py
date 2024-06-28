@@ -15,6 +15,7 @@ cursor = conn.cursor()
 # Create the necessary tables
 cursor.execute('''CREATE TABLE IF NOT EXISTS users (
                     user_id INTEGER PRIMARY KEY,
+                    user_password VARCHAR(255),
                     group_id INTEGER,
                     clothes INTEGER DEFAULT 2000,
                     money INTEGER DEFAULT 2000,
