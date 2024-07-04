@@ -3,9 +3,9 @@ from telebot import types
 import sqlite3
 
 # Initialize the bot with your token
-API_TOKEN = '2033945878:AAE7Icvw001fTx-WkwFQJu24cujfQpD4T68'
-ADMIN_ID = 1479421111
-CHANNEL_ID = "@testbot130"
+API_TOKEN = 'YOUR TOKEN'
+ADMIN_ID = 000
+CHANNEL_ID = "YOUR CHANNEL ID, EXAMPLE : @SOMETHING"
 bot = telebot.TeleBot(API_TOKEN)
 
 # Initialize the database
@@ -212,7 +212,7 @@ def show_assets(message):
             f"<blockquote>کشتی‌سازی کوچک: {user[33]}\n"
             f"کشتی‌سازی متوسط: {user[34]}\n"
             f"کشتی‌سازی بزرگ: {user[35]}</blockquote>\n\n"
-            f"📜 معاهدات:\n{user[36]}"
+            f"📜 معاهدات:\n<blockquote>{user[36]}</blockquote>"
         )
         bot.send_message(message.chat.id, assets_message, parse_mode='HTML')
     else:
