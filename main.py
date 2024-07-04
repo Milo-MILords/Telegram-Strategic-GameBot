@@ -3,9 +3,9 @@ from telebot import types
 import sqlite3
 
 # Initialize the bot with your token
-API_TOKEN = ''
+API_TOKEN = 'YOUR TOKEN'
 ADMIN_ID = 000
-CHANNEL_ID = ""
+CHANNEL_ID = "YOUR CHANNEL ID, EXAMPLE : @SOMETHING"
 bot = telebot.TeleBot(API_TOKEN)
 
 # Initialize the database
@@ -91,8 +91,9 @@ def start(message):
             markup.add(types.InlineKeyboardButton("✉️ پیام خصوصی", callback_data='private_message'))
             markup.add(types.InlineKeyboardButton("📜 معاهده", callback_data='treaty'))
             markup.add(types.InlineKeyboardButton("⚔️ لشکرکشی", callback_data='attack'))
-            markup.add(types.InlineKeyboardButton("🔨آپ هفتگی", callback_data='weekly_update'))
-            markup.add(types.InlineKeyboardButton("🛠️ تنظیم دارایی", callback_data='change_assets'))
+            if user_id == ADMIN_ID:
+                markup.add(types.InlineKeyboardButton("🔨آپ هفتگی", callback_data='weekly_update'))
+                markup.add(types.InlineKeyboardButton("🛠️ تنظیم دارایی", callback_data='change_assets'))
             bot.send_message(message.chat.id, "خوش آمدین قربان", reply_markup=markup)
         else:
             bot.reply_to(message, "شما ابتدا باید با /setlord ثبت نام کنید.")
@@ -250,7 +251,7 @@ def confirm_upgrade(message):
 
 def get_upgrade_cost_message():
     if item_to_upgrade == 'stone_factory':
-        return "برای ارتقا کارخونه سنگ به 500 سنگ و 500 پول نیاز دارید."
+        return "برای ارتقا کارخونه سنگ به 500 چوب و 500 پول نیاز دارید."
     elif item_to_upgrade == 'wood_factory':
         return "برای ارتقا کارخونه چوب به 500 سنگ و 500 پول نیاز دارید."
     elif item_to_upgrade == 'iron_factory':
@@ -289,9 +290,8 @@ def get_upgrade_cost_message():
         return "آیتم مشخص شده برای ارتقا موجود نیست."
 
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith('upgrade_confirm_'))
 def process_upgrade_confirmation(call):
-    group_id = call.chat.id
+    group_id = call.message.chat.id
     if check_upgrade_cost(group_id):
         apply_upgrade(group_id)
         bot.send_message(call.message.chat.id, f"ارتقا یافت")
@@ -305,7 +305,7 @@ def check_upgrade_cost(group_id):
     resources = cursor.fetchone()
     #print(item_to_upgrade)
     if item_to_upgrade == 'confirm_stone_factory':
-        return resources[0] >= 500 and resources[4] >= 500
+        return resources[1] >= 500 and resources[4] >= 500
     elif item_to_upgrade == 'confirm_wood_factory':
         return resources[0] >= 500 and resources[4] >= 500
     elif item_to_upgrade == 'confirm_iron_factory':
@@ -347,7 +347,7 @@ def check_upgrade_cost(group_id):
 def apply_upgrade(group_id):
     if item_to_upgrade == 'confirm_stone_factory':
         cursor.execute(
-            "UPDATE users SET stones = stones - 500, money = money - 500, stone_factory = stone_factory + 1 WHERE group_id=?",
+            "UPDATE users SET wood = wood - 500, money = money - 500, stone_factory = stone_factory + 1 WHERE group_id=?",
             (group_id,))
     elif item_to_upgrade == 'confirm_wood_factory':
         cursor.execute(
@@ -571,7 +571,7 @@ def collect_factory_output(call):
         large_ships_collected = user_factories[17] * 500
 
         cursor.execute(
-            "UPDATE users SET money = money + ?, stones = stones + ?, wood = wood + ?, iron = iron + ?, gold = gold + ?, food = food + ?, meat = meat + ?, clothes = clothes + ?, small_ships = small_ships + ?, medium_ships = medium_ships + ?, large_ships = large_ships + ?, swordsmen = swordsmen + ?, gunmen = gunmen + ?, cavalry_swordsmen = cavalry_swordsmen + ?, cavalry_gunmen = cavalry_gunmen + ?, special_guard = special_guard + ?, medium_cannons = medium_cannons + ?, large_cannons = large_cannons + ? WHERE user_id=?",
+            "UPDATE users SET money = money + ?, stones = stones + ?, wood = wood + ?, iron = iron + ?, gold = gold + ?, food = food + ?, meat = meat + ?, clothes = clothes + ?, small_ships = small_ships + ?, medium_ships = medium_ships + ?, large_ships = large_ships + ?, swordsmen = swordsmen + ?, gunmen = gunmen + ?, cavalry_swordsmen = cavalry_swordsmen + ?, cavalry_gunmen = cavalry_gunmen + ?, special_guard = special_guard + ?, medium_cannons = medium_cannons + ?, large_cannons = large_cannons + ? WHERE group_id=?",
             (money_collected, stones_collected, wood_collected, iron_collected, gold_collected, food_collected,
              meat_collected, clothes_collected, small_ships_collected, medium_ships_collected, large_ships_collected,
              swordsmen_collected, gunmen_collected, cavalry_swordsmen_collected, cavalry_gunmen_collected,
