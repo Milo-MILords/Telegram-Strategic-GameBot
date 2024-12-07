@@ -80,4 +80,4 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 
 ## Contact
 
-For any questions or feedback, please contact https://t.me/MiloMiloww .
+For any questions or feedback, please contact https://t.me/AnonymousPython .
